@@ -1,0 +1,5 @@
+01-05-2022
+barco1 10 10 N
+barco2 5 8 W
+barco3 8 1 E
+barco4 10 20 NW
