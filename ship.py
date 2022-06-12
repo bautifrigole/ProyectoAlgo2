@@ -5,7 +5,7 @@ class Ship:
     actual_y = None
     direction = None
 
-    def __init__(self, name="", initial_position=tuple, direction=""):
+    def __init__(self, name="", initial_position=(None,None), direction=""):
         self.name = name
         self.initial_position = initial_position
         self.actual_x = initial_position[0]
