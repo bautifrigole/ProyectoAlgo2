@@ -86,18 +86,51 @@ def search_ship_by_name(ships, name):
 
 
 def closest_ships(ships):
-    return closest_ships_r(ships, merge_sort_ships(ships, 0), merge_sort_ships(ships, 1))
+    return closest_ships_r(merge_sort_ships(ships, 0), merge_sort_ships(ships, 0), merge_sort_ships(ships, 1))
 
 
 def closest_ships_r(p, x, y):
     if len(p) <= 3:
         return closest_brute_force(p)
-    #dl = closest_ships_r(pl, xl, yl)
-    #dr = closest_ships_r(pr, xr, yr)
 
+    j = 0
+    p1=Array(len(p)//2,Ship())
+    p2=Array(len(p)-len(p)//2,Ship())
+    for i in range(len(p)):
+        if i < len(p) // 2:
+            p1[i] = p[i]
+        else:
+            p2[j] = p[i]
+            j += 1
+
+    xt = divide_coord(p1,p2,x)
+    yt = divide_coord(p1,p2,y)
+    dl = closest_ships_r(p1, xt[0], yt[0])
+    dr = closest_ships_r(p2, xt[1], yt[1])
+    return min(dl,dr)
+
+def divide_coord(p1,p2,coord):
+    i_l = i_r = 0
+    coord_l=p1
+    coord_r = p2
+    for i in range(len(coord)):
+        if search_array(p1,coord[i]):
+            coord_l[i_l] = coord[i]
+            i_l += 1
+        else:
+            coord_r[i_r] = coord[i]
+            i_r += 1
+    return coord_l,coord_r
+
+def search_array(array,element):
+    for i in range(len(array)):
+        if array[i]==element:
+            return True
+
+    return False
 
 def closest_brute_force(ships):
-    d = -math.inf
+    d = math.inf
     for i in range(len(ships)):
         for j in range(i+1, len(ships)):
             x = pow(ships[j].actual_position[0]-ships[i].actual_position[0], 2)
@@ -106,7 +139,9 @@ def closest_brute_force(ships):
             if current_d < d:
                 d = current_d
 
+    return d
 
+#TODO: Arreglarlo.
 def merge_sort_ships(ships, coord):
     s = ships
     ships_1 = Array(len(s) // 2, Ship())
