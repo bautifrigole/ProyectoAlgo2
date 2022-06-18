@@ -1,3 +1,6 @@
+from myarray import Array
+
+
 class LinkedList:
     head = None
 
@@ -315,53 +318,6 @@ def swapNodes(list, nodeAPos, nodeBPos):
     moveNode(list, nodeBnewPos, nodeAPos)
 
 
-# Ordena una lista recursivamente
-def ordenar(L):
-    ordenarR(L, 0)
-
-
-def ordenarR(L, i):
-    currentNode = L.head
-    if i == length(L) - 1:
-        return
-    else:
-        for n in range(0, length(L)):
-            if n == i:
-                minimo = currentNode.value
-                pos = n
-            elif n > i:
-                if currentNode.value < minimo:
-                    minimo = currentNode.value
-                    pos = n
-            currentNode = currentNode.nextNode
-        # move(L,i,pos)
-        ordenarR(L, i + 1)
-
-
-from advancedsort import *
-
-
-def isPermutation(L, S):
-    quickSort(L)
-    quickSort(S)
-    l = length(L)
-    s = length(S)
-    if s != l:
-        flag = False
-    else:
-        flag = True
-        laux = L.head
-        saux = S.head
-        c = 0
-        while c < l and flag == True:
-            if laux.value != saux.value:
-                flag = False
-            laux = laux.nextNode
-            saux = saux.nextNode
-            c = c + 1
-    return (flag)
-
-
 def is_sublist(list1, list2):
     node1 = list1.head
     while node1 is not None:
@@ -385,3 +341,12 @@ def array_to_list(array):
     for i in range(len(array)-1, -1, -1):
         add(L, array[i])
     return L
+
+
+def list_to_array(list, n):
+    node = list.head
+    array = Array(n, node.value)
+    for i in range(n):
+        array[i] = node.value
+        node = node.nextNode
+    return array
