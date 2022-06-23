@@ -352,3 +352,14 @@ def list_to_array(list, n):
         array[i] = node.value
         node = node.nextNode
     return array
+
+def concat_list(L1,L2):
+
+    if L1 is not None:
+        currentnode = L1.head
+        if currentnode is not None:
+            while currentnode.nextNode is not None:
+                currentnode=currentnode.nextNode
+            if L2 is not None:
+                currentnode.nextNode=L2.head
+            return L1

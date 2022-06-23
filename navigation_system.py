@@ -3,7 +3,7 @@ from copy import deepcopy
 from ship import *
 from algo1 import Array
 from myarray import copy_array_without_nones
-from mylinkedlist import LinkedList, add, list_to_array
+from mylinkedlist import LinkedList, add, list_to_array, concat_list
 
 
 def create_index(path):
@@ -26,12 +26,13 @@ def create_index(path):
     a = copy_array_without_nones(ships, length_ships)
     return a
 
+#TODO: Probar
 
-def search(ships, date, name):
-    day = get_day(date)
-    if day is not None:
+def search(ships, date, name,initial_day):
+    actual_day = get_day(date)
+    if actual_day is not None:
         ship = try_search_ship_by_name(ships, name)
-        ship.update_position(day)
+        ship.update_position(actual_day,initial_day)
         return ship.actual_position
 
 
@@ -140,24 +141,24 @@ def closest_ships_r(p, x, y):
     strip_x = merge_sort_ships(strip_x, 1)
     # Si alguno de los dos es None, nos quedamos con la menor distancia fuera de la "ventana"
     if strip_x is not None:
-        min_a = min(d, strip_closest(strip_x, len(strip_x), d))
+        min_a = min(d, strip_closest(strip_x, d))
     else:
         min_a = d
 
     if strip_y is not None:
-        min_b = min(d, strip_closest(strip_y, len(strip_y), d))
+        min_b = min(d, strip_closest(strip_y, d))
     else:
         min_b = d
     return min(min_a, min_b)
 
 
 # Busca la mínima distancia dentro de nuestra "ventana"
-def strip_closest(strip, size, d):
+def strip_closest(strip, d):
     min_val = d
     # Busca distancia con otros 6 barcos
-    for i in range(size):
+    for i in range(len(strip)):
         j = i + 1
-        while j < size and (strip[j].actual_position[1] -
+        while j < len(strip) and (strip[j].actual_position[1] -
                             strip[i].actual_position[1]) < min_val:
             min_val = distance(strip[i], strip[j])
             j += 1
@@ -201,7 +202,6 @@ def distance(b1, b2):
     y = pow(b1.actual_position[1] - b2.actual_position[1], 2)
     return math.sqrt(x + y)
 
-
 def merge_sort_ships(ships, coord):
     if ships is None:
         return
@@ -241,3 +241,115 @@ def merge_sort_ships(ships, coord):
             j += 1
             k += 1
     return ships
+
+
+def search_collision_month(init_day,final_day,ships):
+    for i in range(init_day,final_day):
+        collision_list = search_collision(ships)
+        if collision_list.head is not None:
+            print("Collision detected in day ", i)
+            print("Ships involved: ")
+            print_list_ships(collision_list)
+        update_ships_position(ships,i+1,init_day)
+
+def print_list_ships(L):
+    if L is None:
+        print("List is None")
+        return
+    current = L.head
+    currentPos = 0
+
+    while current != None:
+        if currentPos != 0: print(end=" -> ")
+        print("(", current.value[0].name, " - ", current.value[1].name,")", end="")
+        current = current.nextNode
+        currentPos += 1
+    print()
+    return currentPos
+
+def update_ships_position(ships,actual_day,init_day):
+    for i in range(len(ships)):
+        ships[i].update_position(actual_day,init_day)
+
+
+
+
+
+def search_collision(ships):
+    x = merge_sort_ships(deepcopy(ships), 0)
+    y = merge_sort_ships(deepcopy(ships), 1)
+    # TODO: matar ships y usar solo x
+    ships = deepcopy(x)
+    return search_collision_r(ships, x, y)
+
+
+def search_collision_r(p, x, y):
+    if len(p) <= 3:
+        return collision_brute_force(p)
+
+    j = 0
+    p1 = Array(len(p) // 2, Ship())
+    p2 = Array(len(p) - len(p) // 2, Ship())
+    for i in range(len(p)):
+        if i < len(p) // 2:
+            p1[i] = p[i]
+        else:
+            p2[j] = p[i]
+            j += 1
+
+    xt = divide_coord(p1, p2, x)
+    yt = divide_coord(p1, p2, y)
+    dl = search_collision_r(p1, xt[0], yt[0])
+    dr = search_collision_r(p2, xt[1], yt[1])
+    collision_list = concat_list(dl,dr)
+    d = math.sqrt(2)
+
+    # Armamos la "ventana"
+    # TODO: Refactorear? No usar listas?
+    strip_x = LinkedList()
+    strip_y = LinkedList()
+    middle_point = x[len(p) // 2]
+    strip_x_length = 0
+    strip_y_length = 0
+    #Agrega de forma ordenada los puntos dentro de la ventana, dentro de listas ordenadas por x y por y.
+    for i in range(len(p)):
+        if abs(x[i].actual_position[0] - middle_point.actual_position[0]) < d:
+            add(strip_x, x[i])
+            strip_x_length += 1
+        if abs(y[i].actual_position[0] - middle_point.actual_position[0]) < d:
+            add(strip_y, y[i])
+            strip_y_length += 1
+
+    strip_x = list_to_array(strip_x, strip_x_length)
+    strip_y = list_to_array(strip_y, strip_y_length)
+
+    #Ordena por y strip_x
+    strip_x = merge_sort_ships(strip_x, 1)
+
+    strip_x_list = strip_collision(strip_x, d)
+    collision_list=concat_list(collision_list,strip_x_list)
+
+    strip_y_list = strip_collision(strip_y, d)
+    collision_list = concat_list(collision_list, strip_y_list)
+    return collision_list
+
+def strip_collision(strip,d):
+    collision_list=LinkedList()
+    # Busca distancia con otros 6 barcos
+    for i in range(len(strip)):
+        j = i + 1
+        while j < len(strip) and (strip[j].actual_position[1] -
+                            strip[i].actual_position[1]) < d:
+            add(collision_list,[strip[j],strip[i]])
+            j += 1
+    return collision_list
+
+def collision_brute_force(ships):
+    collision_ships=LinkedList()
+    d = math.inf
+    for i in range(len(ships)):
+        for j in range(i + 1, len(ships)):
+            current_d = distance(ships[i], ships[j])
+            if current_d < math.sqrt(2):
+                d = add(collision_ships,[ships[i],ships[j]])
+    return collision_ships
