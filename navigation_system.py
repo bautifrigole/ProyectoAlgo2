@@ -1,7 +1,8 @@
 import math
-import sys
+from copy import deepcopy
 from ship import *
 from algo1 import Array
+from myarray import copy_array_without_nones
 from mylinkedlist import LinkedList, add, list_to_array
 
 
@@ -10,19 +11,20 @@ def create_index(path):
         lines = f.readlines()
 
     ships = Array(len(lines) - 1, Ship())
-    for i in range(0, len(ships)):
-        index = 0
-        data = ["", "", "", ""]
-        # TODO: usar isNullOrEmpty
-        if lines[i+1] != "\n" and lines[i+1] != "":
+    length_ships = 0
+    for i in range(0, len(lines)-1):
+        if lines[i+1].strip() != "":
+            index = 0
+            data = ["", "", "", ""]
             for j in range(len(lines[i + 1])):
                 if lines[i + 1][j] != " " and lines[i + 1][j] != "\n":
                     data[index] += lines[i + 1][j]
                 else:
                     index += 1
             ships[i] = Ship(data[0], [int(data[1]), int(data[2])], data[3])
-
-    return ships
+            length_ships += 1
+    a = copy_array_without_nones(ships, length_ships)
+    return a
 
 
 def search(ships, date, name):
@@ -49,7 +51,7 @@ def get_day(date):
     if is_valid_date(day_month):
         return day_month[0]
     else:
-        print("Invalid date")
+        print("Error: Invalid date")
 
 
 def is_valid_date(day_month):
@@ -89,8 +91,10 @@ def search_ship_by_name(ships, name):
 
 
 def closest_ships(ships):
-    x = merge_sort_ships(ships, Array(len(ships), Ship()), 0)
-    y = merge_sort_ships(ships, Array(len(ships), Ship()), 1)
+    x = merge_sort_ships(deepcopy(ships), 0)
+    y = merge_sort_ships(deepcopy(ships), 1)
+    # TODO: matar ships y usar solo x
+    ships = deepcopy(x)
     return closest_ships_r(ships, x, y)
 
 
@@ -115,6 +119,7 @@ def closest_ships_r(p, x, y):
     d = min(dl, dr)
     
     # Armamos la "ventana"
+    # TODO: Refactorear? No usar listas?
     strip_x = LinkedList()
     strip_y = LinkedList()
     middle_point = x[len(p) // 2]
@@ -131,17 +136,24 @@ def closest_ships_r(p, x, y):
 
     strip_x = list_to_array(strip_x, strip_x_length)
     strip_y = list_to_array(strip_y, strip_y_length)
-    print(strip_x, strip_y)
-    strip_x = merge_sort_ships(strip_x, Array(len(strip_x), Ship()), 1)
-    min_a = min(d, strip_closest(strip_x, len(strip_x), d))
-    min_b = min(d, strip_closest(strip_y, len(strip_y), d))
 
+    strip_x = merge_sort_ships(strip_x, 1)
+    # Si alguno de los dos es None, nos quedamos con la menor distancia fuera de la "ventana"
+    if strip_x is not None:
+        min_a = min(d, strip_closest(strip_x, len(strip_x), d))
+    else:
+        min_a = d
+
+    if strip_y is not None:
+        min_b = min(d, strip_closest(strip_y, len(strip_y), d))
+    else:
+        min_b = d
     return min(min_a, min_b)
 
 
+# Busca la mínima distancia dentro de nuestra "ventana"
 def strip_closest(strip, size, d):
     min_val = d
-
     # Busca distancia con otros 6 barcos
     for i in range(size):
         j = i + 1
@@ -149,16 +161,16 @@ def strip_closest(strip, size, d):
                             strip[i].actual_position[1]) < min_val:
             min_val = distance(strip[i], strip[j])
             j += 1
-
     return min_val
 
 
+# Divide el array de coordenadas en dos arrays según si pertenecen a p1 o a p2
 def divide_coord(p1, p2, coord):
     i_l = i_r = 0
-    coord_l = p1
-    coord_r = p2
+    coord_l = Array(len(p1), Ship())
+    coord_r = Array(len(p2), Ship())
     for i in range(len(coord)):
-        if search_array(p1, coord[i]):
+        if search_ship_in_array(p1, coord[i]):
             coord_l[i_l] = coord[i]
             i_l += 1
         else:
@@ -167,9 +179,9 @@ def divide_coord(p1, p2, coord):
     return coord_l, coord_r
 
 
-def search_array(array, element):
+def search_ship_in_array(array, element):
     for i in range(len(array)):
-        if array[i] == element:
+        if are_equal_ships(array[i], element):
             return True
     return False
 
@@ -190,8 +202,9 @@ def distance(b1, b2):
     return math.sqrt(x + y)
 
 
-# TODO: Arreglarlo. No está funcionando por el ord_ships
-def merge_sort_ships(ships, ord_ships, coord):
+def merge_sort_ships(ships, coord):
+    if ships is None:
+        return
     ships_1 = Array(len(ships) // 2, Ship())
     ships_2 = Array(len(ships) - len(ships) // 2, Ship())
     j = 0
@@ -204,27 +217,27 @@ def merge_sort_ships(ships, ord_ships, coord):
                 ships_2[j] = ships[i]
                 j += 1
 
-        merge_sort_ships(ships_1, ord_ships, coord)
-        merge_sort_ships(ships_2, ord_ships, coord)
+        merge_sort_ships(ships_1, coord)
+        merge_sort_ships(ships_2, coord)
         i = j = k = 0
 
         while i < len(ships_1) and j < len(ships_2):
             if ships_1[i].actual_position[coord] < ships_2[j].actual_position[coord]:
-                ord_ships[k] = ships_1[i]
+                ships[k] = ships_1[i]
                 i += 1
             else:
-                ord_ships[k] = ships_2[j]
+                ships[k] = ships_2[j]
                 j += 1
             k += 1
 
-        # Checking if any element was left
+        # Chequeamos que no falte ningún elemento
         while i < len(ships_1):
-            ord_ships[k] = ships_1[i]
+            ships[k] = ships_1[i]
             i += 1
             k += 1
 
         while j < len(ships_2):
-            ord_ships[k] = ships_2[j]
+            ships[k] = ships_2[j]
             j += 1
             k += 1
-    return ord_ships
+    return ships

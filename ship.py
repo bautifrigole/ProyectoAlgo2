@@ -22,3 +22,8 @@ class Ship:
 
         if self.direction == "S" or self.direction == "SW" or self.direction == "SE":
             self.actual_position[1] -= day - 1
+
+
+def are_equal_ships(ship1, ship2):
+    return ship1.name == ship2.name and ship1.initial_position == ship2.initial_position \
+           and ship1.actual_position == ship2.actual_position and ship1.direction == ship2.direction

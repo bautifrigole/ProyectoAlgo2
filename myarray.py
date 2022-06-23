@@ -47,3 +47,13 @@ def length(array): # 1+1
 		if array[i] != None: # 1+2
 			count += 1 # 2
 	return count # 3
+
+
+def copy_array_without_nones(array, length):
+	new_array = Array(length, array[0])
+	index = 0
+	for i in range(len(array)):
+		if array[i] is not None:
+			new_array[index] = array[i]
+			index += 1
+	return new_array

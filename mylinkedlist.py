@@ -345,6 +345,8 @@ def array_to_list(array):
 
 def list_to_array(list, n):
     node = list.head
+    if node is None:
+        return
     array = Array(n, node.value)
     for i in range(n):
         array[i] = node.value
