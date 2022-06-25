@@ -4,11 +4,21 @@ from ship import *
 from algo1 import Array
 from myarray import copy_array_without_nones
 from mylinkedlist import LinkedList, add, list_to_array, concat_list
+import pickle
+import sys
 
+SHIPS_ID = 'ships_pick.pkl'
+DATE_ID = 'date.pkl'
+
+
+# FUNCIONES RELACIONADAS A CREATE
 
 def create_index(path):
     with open(path) as f:
         lines = f.readlines()
+
+    with open(DATE_ID, 'wb') as pickle_file:
+        pickle.dump(get_day_month(lines[0]), pickle_file)
 
     ships = Array(len(lines) - 1, Ship())
     length_ships = 0
@@ -23,21 +33,32 @@ def create_index(path):
                     index += 1
             ships[i] = Ship(data[0], [int(data[1]), int(data[2])], data[3])
             length_ships += 1
-    a = copy_array_without_nones(ships, length_ships)
-    return a
+    ships = copy_array_without_nones(ships, length_ships)
+    return ships
 
 
-# TODO: Probar
+def serialize_ships(path):
+    ships = create_index(path)
+    with open(SHIPS_ID, 'wb') as pickle_file:
+        pickle.dump(ships, pickle_file)
+    print("Ships loaded successfully")
+
+
+if sys.argv[1] == "--create":
+    serialize_ships(sys.argv[2])
+
+
+# FUNCIONES RELACIONADAS A SEARCH
 
 def search(ships, date, name, initial_day):
-    actual_day = get_day(date)
+    actual_day = get_day_month(date)[0]
     if actual_day is not None:
         ship = try_search_ship_by_name(ships, name)
         ship.get_position_in_day(actual_day, initial_day)
         return ship.actual_position
 
 
-def get_day(date):
+def get_day_month(date):
     day_month = ["", ""]
     index = 0
     for i in range(len(date)):
@@ -51,9 +72,14 @@ def get_day(date):
     day_month[0] = int(day_month[0])
     day_month[1] = int(day_month[1])
     if is_valid_date(day_month):
-        return day_month[0]
+        return day_month
     else:
         print("Error: Invalid date")
+
+
+def get_last_day(month):
+    max_day_per_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    return max_day_per_month[month-1]
 
 
 def is_valid_date(day_month):
@@ -91,6 +117,24 @@ def search_ship_by_name(ships, name):
         if ships[i].name == name:
             return ships[i]
 
+
+def search_wrapper(date, name):
+    with open(SHIPS_ID, 'wb') as pickle_file:
+        ships = pickle.load(pickle_file)
+
+    with open(DATE_ID, 'wb') as pickle_file:
+        initial_date = pickle.load(pickle_file)
+
+    search(ships, date, name, initial_date[0])
+
+
+if sys.argv[1] == "-search":
+    search_wrapper(sys.argv[2], sys.argv[3])
+
+
+# FUNCIONES RELACIONADAS A CLOSER
+
+#TODO: Adaptar funcion para calcular en un dia pasado por parametro
 
 def closest_ships(ships):
     x = merge_sort_ships(deepcopy(ships), 0)
@@ -153,20 +197,20 @@ def closest_ships_r(p, x, y):
     return min(min_a, min_b)
 
 
-# Busca la mínima distancia dentro de nuestra "ventana"
+    # Busca la mínima distancia dentro de nuestra "ventana"
 def strip_closest(strip, d):
     min_val = d
     # Busca distancia con otros 6 barcos
     for i in range(len(strip)):
         j = i + 1
         while j < len(strip) and (abs(strip[j].actual_position[1] -
-                                  strip[i].actual_position[1])) < min_val:
+                                      strip[i].actual_position[1])) < min_val:
             min_val = distance(strip[i], strip[j])
             j += 1
     return min_val
 
 
-# Divide el array de coordenadas en dos arrays según si pertenecen a p1 o a p2
+    # Divide el array de coordenadas en dos arrays según si pertenecen a p1 o a p2
 def divide_coord(p1, p2, coord):
     i_l = i_r = 0
     coord_l = Array(len(p1), Ship())
@@ -245,8 +289,23 @@ def merge_sort_ships(ships, coord):
     return ships
 
 
+def closest_wrapper(date):
+    with open(SHIPS_ID, 'wb') as pickle_file:
+        ships = pickle.load(pickle_file)
+
+    closest_ships(ships, date)
+
+
+if sys.argv[1] == "-closer":
+    closest_wrapper(sys.argv[2])
+
+
+
+#FUNCIONES RELACIONADAS A COLLISION
+
+
 def search_collision_month(init_day, final_day, ships):
-    for i in range(init_day, final_day+1):
+    for i in range(init_day, final_day + 1):
         collision_list = search_collision(ships)
         if collision_list is not None and collision_list.head is not None:
             print("Collision detected in day ", i)
@@ -341,7 +400,7 @@ def strip_collision(strip, collision_list, d):
     for i in range(len(strip)):
         j = i + 1
         while j < len(strip) and (abs(strip[j].actual_position[1] -
-                                  strip[i].actual_position[1])) <= d:
+                                      strip[i].actual_position[1])) <= d:
             if not search_pair_of_ships_in_list(collision_list, strip[j], strip[i]):
                 add(collision_list, [strip[j], strip[i]])
             j += 1
@@ -367,3 +426,17 @@ def search_pair_of_ships_in_list(list, ship1, ship2):
                 return True
             node = node.nextNode
         return False
+
+
+def collision_wrapper():
+    with open(SHIPS_ID, 'wb') as pickle_file:
+        ships = pickle.load(pickle_file)
+
+    with open(DATE_ID, 'wb') as pickle_file:
+        initial_date = pickle.load(pickle_file)
+
+    search_collision_month(initial_date[0],get_last_day(initial_date[1]),ships)
+
+
+if sys.argv[1] == "-collision":
+    closest_wrapper()
