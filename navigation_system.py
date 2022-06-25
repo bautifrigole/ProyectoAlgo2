@@ -33,7 +33,7 @@ def search(ships, date, name, initial_day):
     actual_day = get_day(date)
     if actual_day is not None:
         ship = try_search_ship_by_name(ships, name)
-        ship.update_position(actual_day, initial_day)
+        ship.get_position_in_day(actual_day, initial_day)
         return ship.actual_position
 
 
@@ -246,14 +246,14 @@ def merge_sort_ships(ships, coord):
 
 
 def search_collision_month(init_day, final_day, ships):
-    for i in range(init_day, final_day):
+    for i in range(init_day, final_day+1):
         collision_list = search_collision(ships)
         if collision_list is not None and collision_list.head is not None:
             print("Collision detected in day ", i)
             print("Ships involved: ")
             print_list_ships(collision_list)
             print()
-        update_ships_position(ships, i + 1, init_day)
+        update_ships_position(ships)
 
 
 def print_list_ships(L):
@@ -272,9 +272,9 @@ def print_list_ships(L):
     return currentPos
 
 
-def update_ships_position(ships, actual_day, init_day):
+def update_ships_position(ships):
     for i in range(len(ships)):
-        ships[i].update_position(actual_day, init_day)
+        ships[i].update_position_next_day()
 
 
 def search_collision(ships):

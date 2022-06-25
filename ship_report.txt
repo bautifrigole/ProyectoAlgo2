@@ -1,9 +1,9 @@
 01-05-2022
 barco1 -5 -5 N
 barco2 -5 5 S
-barco3 -1 3 E
-barco4 4 2 N
+barco3 -1 3 W
+barco4 4 2 W
 barco6 0 2 NW
 barco5 4 4 E
 barco7 -4 -5 E
-barco8 -1 2 NE
+barco8 -1 2 E
