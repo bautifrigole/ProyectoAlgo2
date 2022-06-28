@@ -11,58 +11,16 @@ SHIPS_ID = 'ships_pick.pkl'
 DATE_ID = 'date.pkl'
 
 
-# FUNCIONES RELACIONADAS A CREATE
-
-def create_index(path):
-    with open(path) as f:
-        lines = f.readlines()
-
-    with open(DATE_ID, 'wb') as pickle_file:
-        pickle.dump(get_day_month(lines[0]), pickle_file)
-
-    ships = Array(len(lines) - 1, Ship())
-    length_ships = 0
-    for i in range(0, len(lines) - 1):
-        if lines[i + 1].strip() != "":
-            index = 0
-            data = ["", "", "", ""]
-            for j in range(len(lines[i + 1])):
-                if lines[i + 1][j] != " " and lines[i + 1][j] != "\n":
-                    data[index] += lines[i + 1][j]
-                else:
-                    index += 1
-            ships[i] = Ship(data[0], [int(data[1]), int(data[2])], data[3])
-            length_ships += 1
-    ships = copy_array_without_nones(ships, length_ships)
-    return ships
-
-
-def serialize_ships(path):
-    ships = create_index(path)
-    with open(SHIPS_ID, 'wb') as pickle_file:
-        pickle.dump(ships, pickle_file)
-    print("Ships loaded successfully")
-
-
-if sys.argv[1] == "--create":
-    serialize_ships(sys.argv[2])
-
-
 # FUNCIONES RELACIONADAS A SEARCH
 
-def search(ships, date, name, initial_day):
-    actual_day = get_day_month(date)[0]
-    if actual_day is not None:
-        ship = try_search_ship_by_name(ships, name)
-        ship.get_position_in_day(actual_day, initial_day)
-        return ship.actual_position
+
 
 
 def get_day_month(date):
     day_month = ["", ""]
     index = 0
     for i in range(len(date)):
-        if date[i] != "-":
+        if date[i] != "-" and date[i] != "/" and date[i] != "_":
             day_month[index] += date[i]
         else:
             index += 1
@@ -118,14 +76,30 @@ def search_ship_by_name(ships, name):
             return ships[i]
 
 
+def search(ships, date, name, initial_day):
+    actual_day = get_day_month(date)
+    if actual_day is not None:
+        actual_day = actual_day[0]
+        ship = try_search_ship_by_name(ships, name)
+
+        if ship is not None:
+
+            ship.get_position_in_day(actual_day, initial_day)
+            print("Position in", date, ": ", ship.actual_position)
+            return ship.actual_position
+        else:
+            print("Ship with name '", name, "' not found")
+
+
+
 def search_wrapper(date, name):
-    with open(SHIPS_ID, 'wb') as pickle_file:
+    with open(SHIPS_ID, 'rb') as pickle_file:
         ships = pickle.load(pickle_file)
 
-    with open(DATE_ID, 'wb') as pickle_file:
+    with open(DATE_ID, 'rb') as pickle_file:
         initial_date = pickle.load(pickle_file)
+    search_date = search(ships, date, name, initial_date[0])
 
-    search(ships, date, name, initial_date[0])
 
 
 if sys.argv[1] == "-search":
@@ -290,10 +264,10 @@ def merge_sort_ships(ships, coord):
 
 
 def closest_wrapper(date):
-    with open(SHIPS_ID, 'wb') as pickle_file:
+    with open(SHIPS_ID, 'rb') as pickle_file:
         ships = pickle.load(pickle_file)
 
-    closest_ships(ships, date)
+    print(closest_ships(ships))
 
 
 if sys.argv[1] == "-closer":
@@ -429,14 +403,50 @@ def search_pair_of_ships_in_list(list, ship1, ship2):
 
 
 def collision_wrapper():
-    with open(SHIPS_ID, 'wb') as pickle_file:
+    with open(SHIPS_ID, 'rb') as pickle_file:
         ships = pickle.load(pickle_file)
 
-    with open(DATE_ID, 'wb') as pickle_file:
+    with open(DATE_ID, 'rb') as pickle_file:
         initial_date = pickle.load(pickle_file)
+
 
     search_collision_month(initial_date[0],get_last_day(initial_date[1]),ships)
 
 
 if sys.argv[1] == "-collision":
-    closest_wrapper()
+    collision_wrapper()
+
+
+def create_index(path):
+    with open(path) as f:
+        lines = f.readlines()
+
+    with open(DATE_ID, 'wb') as pickle_file:
+        pickle.dump(get_day_month(lines[0]), pickle_file)
+
+    ships = Array(len(lines) - 1, Ship())
+    length_ships = 0
+    for i in range(0, len(lines) - 1):
+        if lines[i + 1].strip() != "":
+            index = 0
+            data = ["", "", "", ""]
+            for j in range(len(lines[i + 1])):
+                if lines[i + 1][j] != " " and lines[i + 1][j] != "\n":
+                    data[index] += lines[i + 1][j]
+                else:
+                    index += 1
+            ships[i] = Ship(data[0], [int(data[1]), int(data[2])], data[3])
+            length_ships += 1
+    ships = copy_array_without_nones(ships, length_ships)
+    return ships
+
+
+def serialize_ships(path):
+    ships = create_index(path)
+    with open(SHIPS_ID, 'wb') as pickle_file:
+        pickle.dump(ships, pickle_file)
+    print(len(ships), "ships loaded successfully")
+
+
+if sys.argv[1] == "-create":
+    serialize_ships(sys.argv[2])
