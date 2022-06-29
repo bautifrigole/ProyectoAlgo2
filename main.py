@@ -1,5 +1,5 @@
-from ship import *
-from algo1 import Array
+'''from ship import *
+from Algo1.algo1 import Array
 from navigation_system import *
 import random
 
@@ -14,4 +14,4 @@ for i in range(0, len(ships)):
 #print(search(ships, "30-05-2022", "barco4"))
 
 search_collision_month(1, 31, ships)
-print(ships)
+print(ships)'''

@@ -1,4 +1,4 @@
-from algo1 import *
+from Algo1.algo1 import *
 
 def access(array, position): # 3
 	return array[position] # 3

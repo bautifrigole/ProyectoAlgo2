@@ -1,5 +1,6 @@
 from copy import deepcopy
 
+
 class Ship:
     name = None
     initial_position = []
@@ -12,7 +13,7 @@ class Ship:
         self.actual_position = deepcopy(initial_position)
         self.direction = direction
 
-    def get_position_in_day(self, actual_day, initial_day):
+    def update_position_in_day(self, actual_day, initial_day):
         if self.direction == "E" or self.direction == "NE" or self.direction == "SE":
             self.actual_position[0] += actual_day - initial_day
 

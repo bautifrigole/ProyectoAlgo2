@@ -1,4 +1,4 @@
-from myarray import Array
+from Algo1.myarray import Array
 
 
 class LinkedList:
