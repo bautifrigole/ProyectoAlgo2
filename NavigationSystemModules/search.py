@@ -10,7 +10,7 @@ def search(ships, day_month, name, initial_day):
 
 def try_search_ship_by_name(ships, name):
     index_str = ""
-    for i in range(len(name) - 1, 0, -1):
+    for i in range(len(name) - 1, -1, -1):
         try:
             int(name[i])
         except ValueError:
@@ -19,7 +19,7 @@ def try_search_ship_by_name(ships, name):
             index_str += name[i]
 
     try:
-        index = int(index_str[::-1])
+        index = int(reverse_str(index_str))
     except ValueError:
         return search_ship_by_name(ships, name)
 
@@ -32,6 +32,13 @@ def try_search_ship_by_name(ships, name):
             return ships[index - 1]
         else:
             return search_ship_by_name(ships, name)
+
+
+def reverse_str(string):
+    reverse = ""
+    for i in range(len(string) - 1, -1, -1):
+        reverse += string[i]
+    return reverse
 
 
 def search_ship_by_name(ships, name):

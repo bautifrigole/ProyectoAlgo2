@@ -1,4 +1,4 @@
-def get_day_month(date):
+def get_day_month_year(date):
     day_month = ["", "", ""]
     index = 0
     for i in range(len(date)):
@@ -9,9 +9,14 @@ def get_day_month(date):
             if index == 3:
                 break
 
-    day_month[0] = int(day_month[0])
-    day_month[1] = int(day_month[1])
-    day_month[2] = int(day_month[2])
+    try:
+        day_month[0] = int(day_month[0])
+        day_month[1] = int(day_month[1])
+        day_month[2] = int(day_month[2])
+    except ValueError:
+        print("Error: Invalid date")
+        return
+
     if is_valid_date(day_month):
         return day_month
     else:

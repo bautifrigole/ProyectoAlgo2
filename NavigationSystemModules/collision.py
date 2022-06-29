@@ -44,7 +44,6 @@ def update_ships_position(ships):
 def search_collision(ships):
     x = merge_sort_ships(deepcopy(ships), 0)
     y = merge_sort_ships(deepcopy(ships), 1)
-    # TODO: matar ships y usar solo x
     ships = deepcopy(x)
     return search_collision_r(ships, x, y)
 

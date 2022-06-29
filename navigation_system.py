@@ -1,6 +1,6 @@
 import pickle
 import sys
-from NavigationSystemModules.date_management import get_last_day, get_day_month
+from NavigationSystemModules.date_management import get_last_day, get_day_month_year
 from NavigationSystemModules.creation import create_index
 from NavigationSystemModules.search import search
 from NavigationSystemModules.closer import closest_ships
@@ -15,16 +15,19 @@ def serialize_ships(path):
         date = f.readline()
 
     with open(DATE_ID, 'wb') as pickle_file:
-        pickle.dump(get_day_month(date), pickle_file)
+        pickle.dump(get_day_month_year(date), pickle_file)
 
     ships = create_index(path)
     with open(SHIPS_ID, 'wb') as pickle_file:
         pickle.dump(ships, pickle_file)
-    print(len(ships), "ships loaded successfully")
+    print(f"Navy of {len(ships)} ships created successfully")
 
 
 if sys.argv[1] == "-create":
-    serialize_ships(sys.argv[2])
+    try:
+        serialize_ships(sys.argv[2])
+    except IndexError:
+        print("Error: Invalid parameter")
 
 
 def search_wrapper(date, name):
@@ -33,7 +36,7 @@ def search_wrapper(date, name):
 
     with open(DATE_ID, 'rb') as pickle_file:
         initial_date = pickle.load(pickle_file)
-    day_month = get_day_month(date)
+    day_month = get_day_month_year(date)
     if day_month is not None:
         if day_month[2] != initial_date[2]:
             print("Error! You are trying to search for boats in another year than the one given in the file")
@@ -49,7 +52,10 @@ def search_wrapper(date, name):
 
 
 if sys.argv[1] == "-search":
-    search_wrapper(sys.argv[2], sys.argv[3])
+    try:
+        search_wrapper(sys.argv[2], sys.argv[3])
+    except IndexError:
+        print("Error: Invalid parameter")
 
 
 def closest_wrapper(date):
@@ -58,7 +64,7 @@ def closest_wrapper(date):
 
     with open(DATE_ID, 'rb') as pickle_file:
         initial_date = pickle.load(pickle_file)
-    actual_date = get_day_month(date)
+    actual_date = get_day_month_year(date)
     if actual_date is not None:
         if actual_date[2] != initial_date[2]:
             print("Error! You are trying to search for boats in another year than the one given in the file")
@@ -71,7 +77,10 @@ def closest_wrapper(date):
 
 
 if sys.argv[1] == "-closer":
-    closest_wrapper(sys.argv[2])
+    try:
+        closest_wrapper(sys.argv[2])
+    except IndexError:
+        print("Error: Invalid parameter")
 
 
 def collision_wrapper():

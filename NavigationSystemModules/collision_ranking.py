@@ -2,30 +2,22 @@ import math
 from ship import *
 from Algo1.algo1 import Array
 from Algo1.mylinkedlist import LinkedList, add, list_to_array
+from NavigationSystemModules.closer import ShipDistance, update_ships_position, min_ships_distance, divide_coord, \
+    distance, merge_sort_ships
 
 
-class ShipDistance:
-    distance = None
-    ship1: None
-    ship2: None
-
-
-def closest_ships(ships, actual_day, initial_day):
+def make_collision_ranking(ships, actual_day, initial_day):
     update_ships_position(ships, actual_day, initial_day)
     x = merge_sort_ships(deepcopy(ships), 0)
     y = merge_sort_ships(deepcopy(ships), 1)
     ships = deepcopy(x)
-    return closest_ships_r(ships, x, y)
+    ranking = Array(10, Ship())
+    return ranking_ships_r(ships, x, y, ranking)
 
 
-def update_ships_position(ships, actual_day, initial_day):
-    for i in range(len(ships)):
-        ships[i].update_position_in_day(actual_day, initial_day)
-
-
-def closest_ships_r(ships, ships_x, ships_y):
+def ranking_ships_r(ships, ships_x, ships_y, ranking):
     if len(ships) <= 3:
-        return closest_brute_force(ships)
+        return ranking_brute_force(ships, ranking)
 
     j = 0
     ships1 = Array(len(ships) // 2, Ship())
@@ -39,8 +31,8 @@ def closest_ships_r(ships, ships_x, ships_y):
 
     ships_xt = divide_coord(ships1, ships2, ships_x)
     ships_yt = divide_coord(ships1, ships2, ships_y)
-    ships_dl = closest_ships_r(ships1, ships_xt[0], ships_yt[0])
-    ships_dr = closest_ships_r(ships2, ships_xt[1], ships_yt[1])
+    ships_dl = ranking_ships_r(ships1, ships_xt[0], ships_yt[0], ranking)
+    ships_dr = ranking_ships_r(ships2, ships_xt[1], ships_yt[1], ranking)
     ships_d = min_ships_distance(ships_dl, ships_dr)
 
     # Armamos la "ventana"
@@ -63,28 +55,23 @@ def closest_ships_r(ships, ships_x, ships_y):
     strip_y = list_to_array(strip_y, strip_y_length)
 
     strip_x = merge_sort_ships(strip_x, 1)
-    # Si alguno de los dos es None, nos quedamos con la menor distancia fuera de la "ventana"
+    ranking_strip_closest(strip_x, ships_d.distance, ranking)
+    ranking_strip_closest(strip_y, ships_d.distance, ranking)
+    '''# Si alguno de los dos es None, nos quedamos con la menor distancia fuera de la "ventana"
     if strip_x is not None:
-        min_a = min_ships_distance(ships_d, strip_closest(strip_x, ships_d.distance))
+        min_a = min_ships_distance(ships_d, ranking_strip_closest(strip_x, ships_d.distance))
     else:
         min_a = ships_d
 
     if strip_y is not None:
-        min_b = min_ships_distance(ships_d, strip_closest(strip_y, ships_d.distance))
+        min_b = min_ships_distance(ships_d, ranking_strip_closest(strip_y, ships_d.distance))
     else:
         min_b = ships_d
-    return min_ships_distance(min_a, min_b)
-
-
-def min_ships_distance(ship_d1, ship_d2):
-    if ship_d1.distance <= ship_d2.distance:
-        return ship_d1
-    else:
-        return ship_d2
+    return min_ships_distance(min_a, min_b)'''
 
 
 # Busca la mínima distancia dentro de nuestra "ventana"
-def strip_closest(strip, d):
+def ranking_strip_closest(strip, d, ranking):
     ships_d = ShipDistance()
     ships_d.distance = d
     # Busca distancia con otros 6 barcos
@@ -95,87 +82,79 @@ def strip_closest(strip, d):
             ships_d.distance = distance(strip[i], strip[j])
             ships_d.ship1 = strip[i]
             ships_d.ship2 = strip[j]
+            add_ships_distance_to_ranking(ranking, ships_d)
             j += 1
     return ships_d
 
 
-# Divide el array de coordenadas en dos arrays según si pertenecen a p1 o a p2
-def divide_coord(p1, p2, coord):
-    i_l = i_r = 0
-    coord_l = Array(len(p1), Ship())
-    coord_r = Array(len(p2), Ship())
-    for i in range(len(coord)):
-        if search_ship_in_array(p1, coord[i]):
-            coord_l[i_l] = coord[i]
-            i_l += 1
-        else:
-            coord_r[i_r] = coord[i]
-            i_r += 1
-    return coord_l, coord_r
-
-
-def search_ship_in_array(array, element):
-    for i in range(len(array)):
-        if are_equal_ships(array[i], element):
-            return True
-    return False
-
-
-def closest_brute_force(ships):
+def ranking_brute_force(ships, ranking):
     ships_d = ShipDistance()
+    current_d = ShipDistance()
     ships_d.distance = math.inf
     for i in range(len(ships)):
         for j in range(i + 1, len(ships)):
-            current_d = distance(ships[i], ships[j])
-            if current_d < ships_d.distance:
+            current_d.distance = distance(ships[i], ships[j])
+            current_d.ship1 = ships[i]
+            current_d.ship2 = ships[j]
+            add_ships_distance_to_ranking(ranking, current_d)
+
+            if current_d.distance < ships_d.distance:
                 ships_d.distance = current_d
                 ships_d.ship1 = ships[i]
                 ships_d.ship2 = ships[j]
     return ships_d
 
 
-def distance(b1, b2):
-    x = pow(b1.actual_position[0] - b2.actual_position[0], 2)
-    y = pow(b1.actual_position[1] - b2.actual_position[1], 2)
-    return math.sqrt(x + y)
+def add_ships_distance_to_ranking(ranking, ships_distance):
+    there_are_nones = False
+    for i in range(len(ranking)):
+        if ranking[i] is None:
+            there_are_nones = True
+            ranking[i] = ships_distance
+            merge_sort_ships_distance(ranking)
+
+    if not there_are_nones:
+        if ships_distance < ranking[9]:
+            ranking[9] = ships_distance
+            merge_sort_ships_distance(ranking)
 
 
-def merge_sort_ships(ships, coord):
-    if ships is None:
+def merge_sort_ships_distance(ships_distances):
+    if ships_distances is None:
         return
-    ships_1 = Array(len(ships) // 2, Ship())
-    ships_2 = Array(len(ships) - len(ships) // 2, Ship())
+    ships_1 = Array(len(ships_distances) // 2, Ship())
+    ships_2 = Array(len(ships_distances) - len(ships_distances) // 2, Ship())
     j = 0
 
-    if len(ships) > 1:
-        for i in range(len(ships)):
-            if i < len(ships) // 2:
-                ships_1[i] = ships[i]
+    if len(ships_distances) > 1:
+        for i in range(len(ships_distances)):
+            if i < len(ships_distances) // 2:
+                ships_1[i] = ships_distances[i]
             else:
-                ships_2[j] = ships[i]
+                ships_2[j] = ships_distances[i]
                 j += 1
 
-        merge_sort_ships(ships_1, coord)
-        merge_sort_ships(ships_2, coord)
+        merge_sort_ships_distance(ships_1)
+        merge_sort_ships_distance(ships_2)
         i = j = k = 0
 
         while i < len(ships_1) and j < len(ships_2):
-            if ships_1[i].actual_position[coord] < ships_2[j].actual_position[coord]:
-                ships[k] = ships_1[i]
+            if ships_1[i].distance < ships_2[j].distance:
+                ships_distances[k] = ships_1[i]
                 i += 1
             else:
-                ships[k] = ships_2[j]
+                ships_distances[k] = ships_2[j]
                 j += 1
             k += 1
 
         # Chequeamos que no falte ningún elemento
         while i < len(ships_1):
-            ships[k] = ships_1[i]
+            ships_distances[k] = ships_1[i]
             i += 1
             k += 1
 
         while j < len(ships_2):
-            ships[k] = ships_2[j]
+            ships_distances[k] = ships_2[j]
             j += 1
             k += 1
-    return ships
+    return ships_distances
